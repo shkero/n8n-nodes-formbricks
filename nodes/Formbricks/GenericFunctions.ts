@@ -1,0 +1,69 @@
+import {
+  IDataObject,
+  IExecuteFunctions,
+  IHookFunctions,
+  IHttpRequestMethods,
+  IHttpRequestOptions,
+  ILoadOptionsFunctions,
+  INodePropertyOptions,
+  JsonObject,
+  NodeApiError,
+  NodeOperationError,
+} from "n8n-workflow";
+
+/**
+ * Make an API request to Formbricks
+ */
+export async function apiRequest(
+  this: IHookFunctions | IExecuteFunctions | ILoadOptionsFunctions,
+  method: IHttpRequestMethods,
+  resource: string,
+  body: object,
+  query: IDataObject = {},
+  option: IDataObject = {}
+): Promise<any> {
+  const credentials = await this.getCredentials("formbricksApi");
+
+  let options: IHttpRequestOptions = {
+    baseURL: `${credentials.host}/api/v2`,
+    method,
+    body,
+    qs: query,
+    url: resource,
+    headers: {
+      "x-api-key": credentials.apiKey,
+    },
+  };
+
+  if (!Object.keys(query).length) {
+    delete options.qs;
+  }
+
+  options = Object.assign({}, options, option);
+  try {
+    return await this.helpers.httpRequestWithAuthentication.call(
+      this,
+      "formbricksApi",
+      options
+    );
+  } catch (error) {
+    throw new NodeApiError(this.getNode(), error as JsonObject);
+  }
+}
+
+/**
+ * Returns all workspaces available to the organization API key.
+ */
+export async function getWorkspaces(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+  const responseData = await apiRequest.call(this, "GET", "/me", {});
+  const workspaces = responseData.workspaces || responseData.data?.workspaces;
+
+  if (!Array.isArray(workspaces)) {
+    throw new NodeOperationError(this.getNode(), "No workspaces got returned");
+  }
+
+  return workspaces.map((workspace) => ({
+    name: workspace.projectName || workspace.workspaceName || workspace.workspaceId,
+    value: workspace.workspaceId,
+  }));
+}
