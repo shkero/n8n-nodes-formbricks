@@ -41,7 +41,7 @@ For an unpublished local build, create a tarball from this repository and instal
 npm run build
 npm pack
 cd ~/.n8n/nodes
-npm install /path/to/n8n-nodes-formbricks-new-1.0.3.tgz
+npm install /path/to/n8n-nodes-formbricks-new-1.0.4.tgz
 ```
 
 Restart n8n after installing the local tarball.
@@ -69,7 +69,7 @@ The node loads available workspaces from the current Formbricks API v2:
 curl -H "x-api-key: <API_KEY>" https://form.example.com/api/v2/me
 ```
 
-It uses the returned `workspaces[]` array. The option label is based on `projectName`, and the option value is `workspaceId`.
+It uses the returned `workspaces[]` array. It also supports Formbricks responses that expose the same data as `workspacePermissions[]`. The option label is based on `projectName` or `workspaceName`, and the option value is `workspaceId`.
 
 ## Usage
 

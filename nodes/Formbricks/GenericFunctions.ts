@@ -56,14 +56,36 @@ export async function apiRequest(
  */
 export async function getWorkspaces(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
   const responseData = await apiRequest.call(this, "GET", "/me", {});
-  const workspaces = responseData.workspaces || responseData.data?.workspaces;
+  const workspaces =
+    responseData.workspaces ||
+    responseData.data?.workspaces ||
+    responseData.workspacePermissions ||
+    responseData.data?.workspacePermissions ||
+    responseData.environments ||
+    responseData.data?.environments ||
+    responseData.environmentPermissions ||
+    responseData.data?.environmentPermissions;
 
   if (!Array.isArray(workspaces)) {
-    throw new NodeOperationError(this.getNode(), "No workspaces got returned");
+    throw new NodeOperationError(
+      this.getNode(),
+      "No Formbricks workspaces got returned from GET /api/v2/me"
+    );
   }
 
-  return workspaces.map((workspace) => ({
-    name: workspace.projectName || workspace.workspaceName || workspace.workspaceId,
-    value: workspace.workspaceId,
-  }));
+  const returnData = workspaces
+    .filter((workspace) => workspace.workspaceId)
+    .map((workspace) => ({
+      name: workspace.projectName || workspace.workspaceName || workspace.workspaceId,
+      value: workspace.workspaceId,
+    }));
+
+  if (returnData.length === 0) {
+    throw new NodeOperationError(
+      this.getNode(),
+      "No Formbricks workspaces with workspaceId got returned from GET /api/v2/me"
+    );
+  }
+
+  return returnData;
 }
