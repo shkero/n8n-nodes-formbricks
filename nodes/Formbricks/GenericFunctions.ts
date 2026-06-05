@@ -20,12 +20,13 @@ export async function apiRequest(
   resource: string,
   body: object,
   query: IDataObject = {},
-  option: IDataObject = {}
+  option: IDataObject = {},
+  apiVersion = "v2"
 ): Promise<any> {
   const credentials = await this.getCredentials("formbricksApi");
 
   let options: IHttpRequestOptions = {
-    baseURL: `${credentials.host}/api/v2`,
+    baseURL: `${credentials.host}/api/${apiVersion}`,
     method,
     body,
     qs: query,
@@ -97,4 +98,32 @@ export async function getWorkspaces(this: ILoadOptionsFunctions): Promise<INodeP
   }
 
   return returnData;
+}
+
+/**
+ * Returns surveys for the selected workspace.
+ */
+export async function getSurveys(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+  const workspaceId = (this.getCurrentNodeParameter("workspaceId") as string | undefined)?.trim();
+
+  if (!workspaceId) {
+    throw new NodeOperationError(this.getNode(), "Select a Formbricks workspace first");
+  }
+
+  const responseData = await apiRequest.call(this, "GET", "/management/surveys", {}, {}, {}, "v1");
+  const surveys = responseData.data;
+
+  if (!Array.isArray(surveys)) {
+    throw new NodeOperationError(
+      this.getNode(),
+      "No Formbricks surveys got returned from GET /api/v1/management/surveys"
+    );
+  }
+
+  return surveys
+    .filter((survey) => survey.workspaceId === workspaceId)
+    .map((survey) => ({
+      name: survey.name || survey.id,
+      value: survey.id,
+    }));
 }

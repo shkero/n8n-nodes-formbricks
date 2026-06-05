@@ -41,7 +41,7 @@ For an unpublished local build, create a tarball from this repository and instal
 npm run build
 npm pack
 cd ~/.n8n/nodes
-npm install /path/to/n8n-nodes-formbricks-new-1.0.5.tgz
+npm install /path/to/n8n-nodes-formbricks-new-1.0.6.tgz
 ```
 
 Restart n8n after installing the local tarball.
@@ -69,6 +69,8 @@ This node uses these Formbricks API v2 endpoints:
 - `GET /api/v2/management/webhooks` to check for an existing webhook
 - `POST /api/v2/management/webhooks` to register the n8n production webhook
 - `DELETE /api/v2/management/webhooks/{id}` to remove the webhook when the workflow is deactivated
+
+It also uses `GET /api/v1/management/surveys` to load survey choices in n8n because the current public API v2 documentation does not expose a survey list endpoint.
 
 Recommended permissions for the full n8n trigger lifecycle:
 
@@ -100,7 +102,7 @@ It uses the returned `workspaces[]` array. It also supports Formbricks responses
 1. Add the **Formbricks** trigger node to an n8n workflow.
 2. Select the workspace that should receive the webhook.
 3. Select one or more events, for example **Response Finished**.
-4. Optionally enter comma-separated Survey IDs. Leave the field empty to trigger for all surveys in the workspace.
+4. Optionally select surveys. Leave **Survey IDs** empty to trigger this node for all surveys in the workspace.
 5. Save and activate the workflow.
 
 When the workflow is activated, n8n creates a production webhook URL and the node registers it in Formbricks with:
@@ -167,7 +169,7 @@ Publishing is optional for local use. It requires an npm account logged in on th
 
 This package is based on the upstream Formbricks n8n node and was updated to register webhooks through the Formbricks API v2 management webhook endpoints.
 
-Formbricks API v2 currently exposes webhook management under `/api/v2/management/webhooks`. A v2 management survey list endpoint is not exposed in the current public docs/source, so Survey IDs are entered manually.
+Formbricks API v2 currently exposes webhook management under `/api/v2/management/webhooks`. Survey choices are loaded through `/api/v1/management/surveys` until an API v2 survey list endpoint is available.
 
 ## Resources
 

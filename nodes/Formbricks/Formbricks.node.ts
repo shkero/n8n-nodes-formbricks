@@ -7,7 +7,7 @@ import {
   NodeOperationError,
 } from "n8n-workflow";
 
-import { apiRequest, getWorkspaces } from "./GenericFunctions";
+import { apiRequest, getSurveys, getWorkspaces } from "./GenericFunctions";
 
 function parseSurveyIds(surveyIds: string | string[]): string[] {
   if (Array.isArray(surveyIds)) {
@@ -92,14 +92,19 @@ export class Formbricks implements INodeType {
         displayName: "Survey IDs",
         name: "surveyIds",
         description:
-          "Optional comma-separated survey IDs. Leave empty to trigger this node for all surveys in the workspace.",
-        type: "string",
-        default: "",
+          'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+        type: "multiOptions",
+        typeOptions: {
+          loadOptionsMethod: "getSurveys",
+        },
+        options: [],
+        default: [],
       },
     ],
   };
   methods = {
     loadOptions: {
+      getSurveys,
       getWorkspaces,
     },
   };
