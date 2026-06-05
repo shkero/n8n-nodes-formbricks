@@ -54,7 +54,7 @@ export class Formbricks implements INodeType {
         displayName: "Workspace Name or ID",
         name: "workspaceId",
         description:
-          'Workspace where the webhook should be registered. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+          'Workspace where the webhook should be registered. Manage access is recommended so n8n can create and delete webhooks. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
         type: "options",
         typeOptions: {
           loadOptionsMethod: "getWorkspaces",

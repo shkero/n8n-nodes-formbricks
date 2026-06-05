@@ -75,10 +75,19 @@ export async function getWorkspaces(this: ILoadOptionsFunctions): Promise<INodeP
 
   const returnData = workspaces
     .filter((workspace) => workspace.workspaceId)
-    .map((workspace) => ({
-      name: workspace.projectName || workspace.workspaceName || workspace.workspaceId,
-      value: workspace.workspaceId,
-    }));
+    .map((workspace) => {
+      const workspaceName = workspace.projectName || workspace.workspaceName || workspace.workspaceId;
+      const permission = workspace.permissions || workspace.permission;
+      const permissionLabel =
+        typeof permission === "string"
+          ? ` (${permission.charAt(0).toUpperCase()}${permission.slice(1)})`
+          : "";
+
+      return {
+        name: `${workspaceName}${permissionLabel}`,
+        value: workspace.workspaceId,
+      };
+    });
 
   if (returnData.length === 0) {
     throw new NodeOperationError(

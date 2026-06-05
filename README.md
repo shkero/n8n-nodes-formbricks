@@ -41,7 +41,7 @@ For an unpublished local build, create a tarball from this repository and instal
 npm run build
 npm pack
 cd ~/.n8n/nodes
-npm install /path/to/n8n-nodes-formbricks-new-1.0.4.tgz
+npm install /path/to/n8n-nodes-formbricks-new-1.0.5.tgz
 ```
 
 Restart n8n after installing the local tarball.
@@ -59,6 +59,30 @@ The credential test calls:
 GET /api/v2/me
 ```
 
+## Required Permissions
+
+Formbricks API keys are organization-level keys with separate organization and workspace permissions.
+
+This node uses these Formbricks API v2 endpoints:
+
+- `GET /api/v2/me` to test credentials and load the workspace list
+- `GET /api/v2/management/webhooks` to check for an existing webhook
+- `POST /api/v2/management/webhooks` to register the n8n production webhook
+- `DELETE /api/v2/management/webhooks/{id}` to remove the webhook when the workflow is deactivated
+
+Recommended permissions for the full n8n trigger lifecycle:
+
+- **Organization access**: Read
+- **Selected workspace access**: Manage
+
+Lower workspace permissions have limited behavior:
+
+- **Read**: Credentials and workspace loading can work, but webhook creation fails.
+- **Write**: Webhook creation can work, but webhook deletion during workflow deactivation can fail.
+- **Manage**: Webhook creation, lookup, and deletion can all work.
+
+The credential test only verifies `GET /api/v2/me`, so it can confirm the API key and Organization Read access. It does not prove that the selected workspace has Write or Manage access; that is checked later when n8n activates or deactivates the workflow.
+
 ## Workspace Selection
 
 Workspace is selected in the **Formbricks** trigger node, not in the credential.
@@ -69,7 +93,7 @@ The node loads available workspaces from the current Formbricks API v2:
 curl -H "x-api-key: <API_KEY>" https://form.example.com/api/v2/me
 ```
 
-It uses the returned `workspaces[]` array. It also supports Formbricks responses that expose the same data as `workspacePermissions[]`. The option label is based on `projectName` or `workspaceName`, and the option value is `workspaceId`.
+It uses the returned `workspaces[]` array. It also supports Formbricks responses that expose the same data as `workspacePermissions[]`. The option label is based on `projectName` or `workspaceName`, includes the permission level when returned by Formbricks, and the option value is `workspaceId`.
 
 ## Usage
 
