@@ -1,4 +1,5 @@
 import {
+  IDataObject,
   IHookFunctions,
   INodeType,
   INodeTypeDescription,
@@ -9,6 +10,8 @@ import {
 
 import { apiRequest, getSurveys, getWorkspaces } from "./GenericFunctions";
 
+const MAX_PROCESSED_DELIVERY_IDS = 500;
+
 function parseSurveyIds(surveyIds: string | string[]): string[] {
   if (Array.isArray(surveyIds)) {
     return surveyIds;
@@ -18,6 +21,58 @@ function parseSurveyIds(surveyIds: string | string[]): string[] {
     .split(",")
     .map((surveyId) => surveyId.trim())
     .filter((surveyId) => surveyId !== "");
+}
+
+function getString(value: unknown): string | undefined {
+  return typeof value === "string" && value !== "" ? value : undefined;
+}
+
+function getHeaderValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? getString(value[0]) : getString(value);
+}
+
+function getDeliveryId(bodyData: IDataObject, headerDeliveryId?: string): string | undefined {
+  if (headerDeliveryId !== undefined) {
+    return `header:${headerDeliveryId}`;
+  }
+
+  const event = getString(bodyData.event);
+  const responseData = bodyData.data;
+
+  if (
+    event === undefined ||
+    typeof responseData !== "object" ||
+    responseData === null ||
+    Array.isArray(responseData)
+  ) {
+    return undefined;
+  }
+
+  const response = responseData as IDataObject;
+  const responseId = getString(response.id);
+
+  if (responseId === undefined) {
+    return undefined;
+  }
+
+  return `body:${event}:${responseId}:${getString(response.updatedAt) || getString(response.createdAt) || ""}`;
+}
+
+function wasRecentlyProcessed(webhookData: IDataObject, deliveryId: string): boolean {
+  const processedDeliveryIds = Array.isArray(webhookData.processedDeliveryIds)
+    ? webhookData.processedDeliveryIds.filter(
+      (processedDeliveryId): processedDeliveryId is string =>
+        typeof processedDeliveryId === "string"
+    )
+    : [];
+
+  if (processedDeliveryIds.includes(deliveryId)) {
+    return true;
+  }
+
+  processedDeliveryIds.push(deliveryId);
+  webhookData.processedDeliveryIds = processedDeliveryIds.slice(-MAX_PROCESSED_DELIVERY_IDS);
+  return false;
 }
 
 export class Formbricks implements INodeType {
@@ -197,7 +252,18 @@ export class Formbricks implements INodeType {
 
   async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
     const bodyData = this.getBodyData();
-    // getting bodyData as string, so need to JSON parse it to convert to an object
+    const webhookData = this.getWorkflowStaticData("node");
+    const deliveryId = getDeliveryId(
+      bodyData,
+      getHeaderValue(this.getHeaderData()["webhook-id"])
+    );
+
+    if (deliveryId !== undefined && wasRecentlyProcessed(webhookData, deliveryId)) {
+      return {
+        workflowData: [[]],
+      };
+    }
+
     return {
       workflowData: [this.helpers.returnJsonArray(bodyData)],
     };

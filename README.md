@@ -41,7 +41,7 @@ For an unpublished local build, create a tarball from this repository and instal
 npm run build
 npm pack
 cd ~/.n8n/nodes
-npm install /path/to/n8n-nodes-formbricks-new-1.0.6.tgz
+npm install /path/to/n8n-nodes-formbricks-new-1.0.7.tgz
 ```
 
 Restart n8n after installing the local tarball.

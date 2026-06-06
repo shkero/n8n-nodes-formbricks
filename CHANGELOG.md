@@ -1,5 +1,9 @@
 # n8n-nodes-formbricks-new
 
+## 1.0.7
+
+- Add short-term idempotency handling for duplicate Formbricks webhook deliveries.
+
 ## 0.2.0
 
 ### Minor Changes
